@@ -1,22 +1,44 @@
 const humps = require('humps')
+const _ = require('lodash')
 
 module.exports = pgPool => {
+
+  const orderFor = (resRows, keysArr, keyField, isSingleObject) => {
+    const data = humps.camelizeKeys(resRows)
+    const dataGroupedByField = _.groupBy(data, keyField)
+    return keysArr.map(key => {
+      const elementArray = dataGroupedByField[key]
+      if(elementArray) {
+        return isSingleObject ? elementArray[0] : elementArray
+      }
+      return isSingleObject ? {} : []
+    })
+  }
+
   return {
-    getUserByApiKey(apiKey) {
-      return pgPool.query(`select * from users where api_key = $1`, [apiKey])
-      .then(res => humps.camelizeKeys(res.rows[0]))
+    getUsersByApiKeys(apiKeys) {
+      return pgPool.query(`select * from users where api_key = ANY($1)`, [apiKeys])
+      .then(res => {
+        return orderFor(res.rows, apiKeys, 'apiKey', true)
+      })
     },
-    getContests(userId) {
-      return pgPool.query(`select * from contests where created_by = $1`, [userId])
-      .then(res => humps.camelizeKeys(res.rows))
+    getUsersByIds(userIDs) {
+      return pgPool.query(`select * from users where id = ANY($1)`, [userIDs])
+      .then(res => {
+        return orderFor(res.rows, userIDs, 'id', true)
+      })
     },
-    getNamesByContest(contestId) {
-      return pgPool.query(`select * from names where contest_id = $1`, [contestId])
-      .then(res => humps.camelizeKeys(res.rows))
+    getContests(userIds) {
+      return pgPool.query(`select * from contests where created_by = ANY($1)`, [userIds])
+      .then(res => {
+        return orderFor(res.rows, userIds, 'createdBy', false)
+      })
     },
-    getUserById(userID) {
-      return pgPool.query(`select * from users where id = $1`, [userID])
-      .then(res => humps.camelizeKeys(res.rows[0]))
+    getNamesByContests(contestIds) {
+      return pgPool.query(`select * from names where contest_id = ANY($1)`, [contestIds])
+      .then(res => {
+        return orderFor(res.rows, contestIds, 'contestId', false)
+      })
     }
   }
 }

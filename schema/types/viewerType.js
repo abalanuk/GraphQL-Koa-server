@@ -1,13 +1,13 @@
 const {GraphQLNonNull, GraphQLString, GraphQLInt, GraphQLObjectType, GraphQLID, GraphQLList} = require('graphql')
+const {globalIdField} = require('graphql-relay')
 const ContestType = require('./contestType')
-const pgdb = require('../../database/pgdb')
 const mgdb = require('../../database/mgdb')
 
 module.exports = new GraphQLObjectType({
-  name: "userType",
-
+  name: "viewerNode",
+  description: "This represent a current session's user",
   fields: {
-    id: { type: GraphQLID },
+    id: globalIdField('Viewer'),
     firstName: { type: GraphQLString },
     lastName: { type: GraphQLString },
     fullName: {
@@ -18,7 +18,7 @@ module.exports = new GraphQLObjectType({
     contests: {
       type: new GraphQLList(ContestType),
       resolve(obj, args, ctx) {
-        return pgdb(ctx.pgPoolObj).getContests(obj.id)
+        return ctx.loaders.contestsByUserIds.load(obj.id)
       }
     },
     contestsCount: {
