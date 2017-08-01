@@ -1,3 +1,5 @@
-Clone repo then checkout a branch to start
+Web server: with Koa framework
+DBs: Mongo and Postgres
 
-For questions: [slack.jscomplete.com](http://slack.jscomplete.com/)
+Pluralsight course: GraphQL
+branch: My-learning-branch
